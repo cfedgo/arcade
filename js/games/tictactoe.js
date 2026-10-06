@@ -9,10 +9,7 @@
     [0, 4, 8], [2, 4, 6]
   ];
 
-  const MARKS = [
-    '<svg class="mark x" viewBox="0 0 100 100" aria-hidden="true"><path d="M24 24 76 76M76 24 24 76" stroke="var(--p1)" stroke-width="15" stroke-linecap="round" fill="none"/></svg>',
-    '<svg class="mark o" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="28" stroke="var(--p2)" stroke-width="14" fill="none"/></svg>'
-  ];
+  const MARKS = Arcade.MARKS;
   const NAMES = ['X', 'O'];
 
   // A line through the winning three, drawn on top of the board (board is 100 x 100 units).
@@ -102,7 +99,6 @@
 
   Arcade.registerGame({
     id: 'ttt',
-    newRound,
-    seatIcon: (i) => MARKS[i]
+    newRound
   });
 })();

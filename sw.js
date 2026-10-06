@@ -1,6 +1,6 @@
 /* Luca's Games offline support.
    Bump VERSION whenever files change so phones pick up the new copy. */
-const VERSION = 'lucas-games-v4';
+const VERSION = 'lucas-games-v5';
 const ASSETS = [
   './',
   './index.html',
@@ -8,6 +8,10 @@ const ASSETS = [
   './css/style.css',
   './js/app.js',
   './js/games/tictactoe.js',
+  './js/games/dots.js',
+  './js/games/connect4.js',
+  './js/games/memory.js',
+  './js/games/checkers.js',
   './fonts/bungee.woff2',
   './icons/apple-touch-icon.png',
   './icons/icon-192.png',

@@ -126,6 +126,16 @@
     } catch (e) { wakeLock = null; }
   }
 
+  /* ---------- Player marks: Player 1 is always blue X, Player 2 always green O ---------- */
+
+  const MARK_SHAPES = [
+    '<path d="M24 24 76 76M76 24 24 76" stroke="var(--p1)" stroke-width="15" stroke-linecap="round" fill="none"/>',
+    '<circle cx="50" cy="50" r="28" stroke="var(--p2)" stroke-width="14" fill="none"/>'
+  ];
+  const MARKS = MARK_SHAPES.map((shape, i) =>
+    '<svg class="mark ' + (i ? 'o' : 'x') + '" viewBox="0 0 100 100" aria-hidden="true">' + shape + '</svg>');
+  const disc = (i) => '<span class="disc p' + (i + 1) + '" aria-hidden="true"></span>';
+
   /* ---------- Pictures ---------- */
 
   const ICONS = {
@@ -272,7 +282,7 @@
         sw('sound', 'Sounds', 'Little retro beeps. Off keeps the table quiet.') +
         sw('faceToFace', 'Across the table', 'Flips Player 2’s side so it reads right from across the table.') +
         install +
-        '<p class="fineprint">Luca\u2019s Games · version 4 · no ads, no accounts, nothing leaves this phone.</p>' +
+        '<p class="fineprint">Luca\u2019s Games · version 5 · no ads, no accounts, nothing leaves this phone.</p>' +
       '</main>';
   }
 
@@ -303,15 +313,14 @@
     const g = games.find((x) => x.id === id && x.newRound);
     if (!g) { go('home'); return; }
     const p = state.players;
-    // A game can swap the avatar for its own piece (Tic-Tac-Toe shows X and O).
-    const seatPiece = (i) => g.seatIcon
-      ? '<span class="av piece-badge">' + g.seatIcon(i) + '</span>'
-      : '<span class="av">' + p[i].avatar + '</span>';
+    // Seats show the player's game piece: X / O by default, or the game's own (discs).
+    const seatPiece = (i) => '<span class="av piece-badge">' + (g.seatIcon ? g.seatIcon(i) : MARKS[i]) + '</span>';
     const seat = (i, pos) =>
       '<div class="seat seat-' + pos + ' p' + (i + 1) + '" data-seat="' + i + '">' +
         seatPiece(i) +
         '<span class="seat-text"><span class="nm">' + esc(playerName(i)) + '</span>' +
         '<span class="status"></span></span>' +
+        '<span class="seat-tally" hidden></span>' +
         '<span class="seat-score" aria-label="Wins"></span>' +
       '</div>';
 
@@ -371,20 +380,38 @@
       disarmReset();
       resetBtn.hidden = !hasScore();
       screen.classList.remove('over');
-      seats.forEach((s, k) => { s.classList.remove('active', 'won', 'lost', 'tied'); setStatus(k, ''); });
+      seats.forEach((s, k) => {
+        s.classList.remove('active', 'won', 'lost', 'tied');
+        setStatus(k, '');
+        const t = s.querySelector('.seat-tally');
+        t.hidden = true;
+        t.textContent = '';
+      });
       const starter = state.starters[g.id] === 1 ? 1 : 0;
       slot.innerHTML = '';
       slot.className = 'board-slot';
+      slot.removeAttribute('style');
       const ctx = {
         players: p.map((x) => ({ avatar: x.avatar, name: x.name })),
         starter,
         stage: slot,
         sound: Sound,
-        setTurn(i) {
+        marks: MARKS,
+        markShapes: MARK_SHAPES,
+        disc,
+        // Board shape, as width / height (Connect 4 is 7 / 6). Square by default.
+        setShape(ratio) { slot.style.setProperty('--ar', String(ratio)); },
+        setTurn(i, text) {
           if (finished) return;
           seats.forEach((s, k) => s.classList.toggle('active', k === i));
-          setStatus(i, 'Your turn');
+          setStatus(i, text || 'Your turn');
           setStatus(1 - i, '');
+        },
+        // A running count shown in the seat during the round (boxes, pairs).
+        setTally(i, n) {
+          const t = seats[i].querySelector('.seat-tally');
+          t.hidden = false;
+          t.textContent = n;
         },
         finish(winner) {
           if (finished) return;
@@ -530,5 +557,5 @@
     registerServiceWorker();
   }
 
-  window.Arcade = { registerGame, start };
+  window.Arcade = { registerGame, start, MARKS, MARK_SHAPES, disc };
 })();

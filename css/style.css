@@ -28,6 +28,7 @@
   --font-body: ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --r: 14px;
   --gutter: 16px;
+  --board-max: 480px;
 }
 
 * { box-sizing: border-box; }
@@ -361,7 +362,7 @@ button.game-row:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--e
 
 .seat {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
@@ -381,6 +382,19 @@ button.game-row:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--e
 .seat-text { display: grid; min-width: 0; }
 .seat .nm { font-weight: 800; font-size: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .seat .status { font-family: var(--font-display); font-size: 14px; color: var(--pc); white-space: nowrap; min-height: 1.2em; }
+.seat-tally {
+  min-width: 44px;
+  height: 44px;
+  padding: 0 10px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--pc) 22%, var(--bg));
+  color: var(--pc);
+  font-weight: 900;
+  font-size: 26px;
+  font-variant-numeric: tabular-nums;
+}
 .seat-score {
   display: flex;
   align-items: center;
@@ -415,9 +429,13 @@ button.game-row:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--e
   justify-content: center;
   gap: 12px;
 }
-/* The board leaves room underneath for the Again / Reset score row. */
-.board-slot { width: min(100cqw, calc(100cqh - 68px), 480px); }
-.board-slot.square { aspect-ratio: 1; }
+/* The board keeps its shape (--ar = width / height) and leaves room underneath for Again. */
+.board-slot {
+  --ar: 1;
+  width: min(100cqw, calc((100cqh - 68px) * var(--ar)), calc(var(--board-max) * var(--ar)));
+  aspect-ratio: var(--ar);
+  max-width: 100%;
+}
 
 .action-row {
   height: 56px;
@@ -456,6 +474,20 @@ button.game-row:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--e
   border: 2px solid var(--panel);
 }
 .reset-score.armed { color: var(--danger); border-color: currentColor; }
+
+/* Discs (Connect 4, Checkers) ------------------------------------------- */
+
+.disc {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--pc);
+  box-shadow:
+    inset 0 0 0 var(--disc-ring, 4px) color-mix(in srgb, var(--pc) 72%, var(--edge)),
+    inset 0 -5px 0 var(--disc-ring, 4px) color-mix(in srgb, var(--pc) 55%, var(--edge));
+}
+.piece-badge .disc { width: 62%; height: 62%; --disc-ring: 3px; }
 
 /* Tic-Tac-Toe ------------------------------------------------------------ */
 
@@ -530,9 +562,150 @@ button.game-row:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--e
 /* Bigger screens (iPad) -------------------------------------------------- */
 
 @media (min-width: 700px) {
-  .screen { max-width: 640px; }
+  :root { --board-max: 640px; }
+  .screen { max-width: 760px; }
   .seat .av { width: 60px; height: 60px; font-size: 36px; }
   .seat .nm { font-size: 22px; }
   .seat .status { font-size: 17px; }
   .seat-score { font-size: 30px; }
 }
+
+/* Dots & Boxes ----------------------------------------------------------- */
+
+.dots { display: block; width: 100%; height: 100%; touch-action: manipulation; cursor: pointer; }
+.dots .ln {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 1.1;
+  stroke-linecap: round;
+  stroke-dasharray: .045 .07;
+}
+.dots .ln.drawn {
+  stroke: var(--pc);
+  stroke-width: 3.2;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  animation: draw-line .25s ease-out;
+}
+.dots .ln.last { stroke-width: 3.8; }
+.dots .box.owned rect { fill: color-mix(in srgb, var(--pc) 26%, transparent); }
+.dots .box.owned svg { animation: drop-in .25s ease-out; transform-origin: center; transform-box: fill-box; }
+.dots .dot-points circle { fill: var(--ink); }
+
+/* Connect 4 -------------------------------------------------------------- */
+
+.c4 {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: repeat(6, minmax(0, 1fr));
+  padding: 2%;
+  border-radius: 16px;
+  background: var(--line);
+  box-shadow: 0 5px 0 var(--edge);
+}
+.c4-cell { display: grid; place-items: center; cursor: pointer; }
+.c4-hole {
+  display: block;
+  width: 84%;
+  height: 84%;
+  border-radius: 50%;
+  background: var(--bg-deep);
+  box-shadow: inset 0 3px 0 var(--edge);
+}
+.c4-hole .disc { --disc-ring: 3px; }
+.c4.done .c4-cell:not(.win) .disc { opacity: .4; }
+.c4-cell.win .c4-hole { box-shadow: 0 0 0 3px var(--gold); }
+
+/* Memory Match ----------------------------------------------------------- */
+
+.mem {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template: repeat(4, minmax(0, 1fr)) / repeat(4, minmax(0, 1fr));
+  gap: 3%;
+  container-type: inline-size;
+}
+.mem-card { position: relative; perspective: 700px; border-radius: 12px; }
+.mem-inner {
+  position: absolute;
+  inset: 0;
+  transition: transform .32s ease;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+}
+.mem-card.up .mem-inner, .mem-card.found .mem-inner { transform: rotateY(180deg); }
+.mem-face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.mem-back {
+  background:
+    repeating-linear-gradient(45deg, transparent 0 7px, color-mix(in srgb, var(--line) 70%, transparent) 7px 10px),
+    var(--cell);
+  box-shadow: inset 0 0 0 3px var(--line), 0 4px 0 var(--edge);
+}
+.mem-card:active .mem-back { transform: translateY(2px); }
+.mem-front {
+  transform: rotateY(180deg);
+  background: var(--ink);
+  box-shadow: 0 4px 0 var(--edge);
+  font-size: 13cqw;
+  line-height: 1;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+}
+.mem-card.found .mem-front {
+  background: color-mix(in srgb, var(--pc) 30%, var(--ink));
+  box-shadow: inset 0 0 0 4px var(--pc), 0 4px 0 var(--edge);
+}
+.mem-card.found { cursor: default; }
+
+/* Checkers --------------------------------------------------------------- */
+
+.ck {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template: repeat(8, minmax(0, 1fr)) / repeat(8, minmax(0, 1fr));
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 0 0 4px var(--line), 0 6px 0 4px var(--edge);
+}
+.ck-sq { position: relative; display: grid; place-items: center; }
+.ck-sq.light { background: var(--cell); }
+.ck-sq.dark { background: var(--bg-deep); cursor: pointer; }
+.ck-sq.moved { background: color-mix(in srgb, var(--gold) 16%, var(--bg-deep)); }
+.ck-sq.target::after {
+  content: "";
+  position: absolute;
+  width: 34%;
+  height: 34%;
+  border-radius: 50%;
+  background: var(--gold);
+  animation: glow 1.2s ease-in-out infinite;
+}
+.ck-piece { position: relative; display: block; width: 78%; height: 78%; }
+.ck-piece .disc { --disc-ring: 3px; }
+.ck-piece.selected::before, .ck-piece.must::before {
+  content: "";
+  position: absolute;
+  inset: -9%;
+  border-radius: 50%;
+  border: 3px solid var(--gold);
+}
+.ck-piece.selected { transform: translateY(-2px); }
+.ck-piece.must::before { animation: blink .7s ease-in-out 2; }
+.ck-piece.nope { animation: shake .3s ease-in-out; }
+.ck-piece .crown { position: absolute; left: 20%; top: 18%; width: 60%; height: 60%; }
+.ck.done .ck-sq.target::after { display: none; }
+
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: .2; } }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }

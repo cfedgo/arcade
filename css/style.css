@@ -1,0 +1,488 @@
+/* Dino Garage
+   Layout: a quiet night garage. One column; each player owns a "bay" at their end of the
+   phone, the board sits between them. Chunky retro edges, calm colors, nothing flashing. */
+
+@font-face {
+  font-family: "Bungee";
+  src: url("../fonts/bungee.woff2") format("woff2");
+  font-display: swap;
+}
+
+:root {
+  color-scheme: dark;
+  --bg: #17324a;        /* deep road blue */
+  --bg-deep: #10263a;
+  --panel: #1e405d;
+  --cell: #24506f;
+  --line: #2f6187;
+  --ink: #f1efe3;       /* chalk */
+  --muted: #9cb7c9;
+  --p1: #5ab4f0;        /* player 1: sky blue */
+  --p2: #7ed38f;        /* player 2: dino green */
+  --gold: #f1d678;      /* winner / road paint */
+  --on-gold: #1a2a1f;
+  --edge: #0b1c2a;      /* hard retro shadow */
+  --danger: #e88b7a;
+
+  --font-display: "Bungee", "Arial Black", Impact, system-ui, sans-serif;
+  --font-body: ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --r: 14px;
+  --gutter: 16px;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  overscroll-behavior: none;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.4;
+  overflow: hidden;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+button:focus-visible, input:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
+svg { display: block; }
+
+.app {
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.app.safe {
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
+           env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+}
+.app.no-scroll { overflow: hidden; }
+
+.screen {
+  max-width: 560px;
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+/* Shared bits ------------------------------------------------------------ */
+
+.p1 { --pc: var(--p1); }
+.p2 { --pc: var(--p2); }
+.p1c { color: var(--p1); }
+.p2c { color: var(--p2); }
+.av { font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; line-height: 1; }
+
+.icon-btn {
+  width: 44px; height: 44px;
+  display: grid; place-items: center;
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: 0 3px 0 var(--edge);
+  flex: none;
+}
+.icon-btn svg { width: 24px; height: 24px; }
+.icon-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--edge); }
+
+.bar {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding-block: 12px 4px;
+}
+.bar-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 20px;
+  letter-spacing: .02em;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bar-spacer { width: 44px; }
+
+.primary, .danger {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  border-radius: var(--r);
+  font-weight: 800;
+  font-size: 18px;
+}
+.primary { background: var(--gold); color: var(--on-gold); box-shadow: 0 4px 0 var(--edge); }
+.primary:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--edge); }
+.danger { background: transparent; color: var(--danger); border: 2px solid currentColor; }
+
+.chip {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+
+/* Home ------------------------------------------------------------------- */
+
+.home {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-block: 18px 24px;
+}
+
+.home-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.logo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(38px, 12vw, 56px);
+  line-height: .92;
+  display: flex;
+  flex-direction: column;
+}
+.logo .l1 { color: var(--p2); }
+.logo .l2 { color: var(--p1); }
+.logo::after {
+  content: "";
+  display: block;
+  margin-top: 12px;
+  width: 132px;
+  height: 6px;
+  background: repeating-linear-gradient(90deg, var(--gold) 0 22px, transparent 22px 34px);
+  border-radius: 3px;
+}
+
+.matchup {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  border-radius: var(--r);
+  background: var(--panel);
+  box-shadow: 0 4px 0 var(--edge);
+  text-align: left;
+}
+.matchup:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--edge); }
+.matchup .vs { font-family: var(--font-display); color: var(--muted); font-size: 14px; }
+.who { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.who.p2 { flex-direction: row-reverse; text-align: right; }
+.who .av {
+  font-size: 30px;
+  width: 52px; height: 52px;
+  display: grid; place-items: center;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--pc) 22%, var(--bg-deep));
+  box-shadow: inset 0 0 0 3px var(--pc);
+  flex: none;
+}
+.who .nm { font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.game-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+
+.game-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: var(--r);
+  background: var(--panel);
+  box-shadow: 0 4px 0 var(--edge);
+  text-align: left;
+}
+button.game-row:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--edge); }
+.game-row.soon { background: transparent; box-shadow: inset 0 0 0 2px var(--panel); }
+.game-row.soon .gicon, .game-row.soon .gname { opacity: .55; }
+.gicon { width: 52px; height: 52px; display: grid; place-items: center; border-radius: 10px; background: var(--bg); }
+.gicon svg { width: 40px; height: 40px; }
+.gicon.sm { width: 32px; height: 32px; border-radius: 8px; }
+.gicon.sm svg { width: 24px; height: 24px; }
+.gname { font-weight: 800; font-size: 18px; }
+.grec { display: flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; font-size: 18px; color: var(--muted); }
+.grec b { font-weight: 900; }
+.grec.go svg { width: 22px; height: 22px; color: var(--muted); }
+
+.score-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--r);
+  background: var(--bg-deep);
+}
+.score-strip .label { font-size: 13px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.tally { display: flex; align-items: center; gap: 8px; font-variant-numeric: tabular-nums; }
+.tally b { font-family: var(--font-display); font-weight: 400; font-size: 22px; }
+.tally .av { font-size: 22px; }
+.dash { color: var(--muted); }
+
+/* Players / settings / scores -------------------------------------------- */
+
+.sub { display: flex; flex-direction: column; gap: 16px; padding-block: 6px 28px; }
+.hint, .fineprint { margin: 0; color: var(--muted); font-size: 15px; }
+.fineprint { font-size: 13px; text-align: center; }
+
+.pcard {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--r);
+  background: var(--panel);
+  box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--pc) 60%, transparent), 0 4px 0 var(--edge);
+}
+.pcard-head { display: flex; align-items: center; gap: 12px; }
+.pcard-head .av.big { font-size: 34px; }
+.pcard label { font-family: var(--font-display); font-size: 18px; color: var(--pc); }
+.name-input {
+  width: 100%;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--bg-deep);
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.name-input::placeholder { color: var(--muted); opacity: .7; }
+.av-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.av-opt {
+  aspect-ratio: 1;
+  max-width: 100%;
+  display: grid;
+  place-items: center;
+  font-size: clamp(26px, 8vw, 36px);
+  border-radius: 12px;
+  background: var(--bg-deep);
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+}
+.av-opt.on { background: color-mix(in srgb, var(--pc) 28%, var(--bg-deep)); box-shadow: inset 0 0 0 3px var(--pc); }
+.av-opt:disabled { opacity: .22; cursor: default; }
+
+.setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px;
+  border-radius: var(--r);
+  background: var(--panel);
+  text-align: left;
+}
+.setting-text { display: grid; gap: 2px; min-width: 0; }
+.setting-label { font-weight: 800; font-size: 18px; }
+.setting-note { color: var(--muted); font-size: 14px; }
+.switch {
+  flex: none;
+  width: 56px; height: 32px;
+  border-radius: 999px;
+  background: var(--bg-deep);
+  box-shadow: inset 0 0 0 2px var(--line);
+  position: relative;
+  transition: background .15s;
+}
+.switch span {
+  position: absolute; top: 4px; left: 4px;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--muted);
+  transition: transform .15s, background .15s;
+}
+.setting[aria-checked="true"] .switch { background: color-mix(in srgb, var(--p2) 35%, var(--bg-deep)); box-shadow: inset 0 0 0 2px var(--p2); }
+.setting[aria-checked="true"] .switch span { transform: translateX(24px); background: var(--p2); }
+
+.panel { padding: 14px; border-radius: var(--r); background: var(--bg-deep); }
+.panel h3 { margin: 0 0 6px; font-size: 16px; }
+.panel p { margin: 0; color: var(--muted); font-size: 15px; }
+
+.table-wrap { overflow-x: auto; border-radius: var(--r); background: var(--panel); }
+.scores { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.scores th, .scores td { padding: 12px 10px; text-align: center; }
+.scores thead th { font-size: 13px; font-weight: 800; vertical-align: bottom; }
+.scores thead .av { display: block; font-size: 26px; margin-bottom: 4px; }
+.scores .col-name { display: block; max-width: 7em; margin-inline: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scores tbody th, .scores tfoot th { text-align: left; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+.scores td { font-family: var(--font-display); font-size: 20px; }
+.scores td.tie, .scores th.tie { color: var(--muted); }
+.scores tbody tr { border-top: 2px solid var(--bg); }
+.scores tfoot tr { border-top: 3px solid var(--bg-deep); background: var(--bg-deep); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* Game screen ------------------------------------------------------------ */
+
+.game {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  gap: 12px;
+  padding-block: 0 14px;
+}
+.game .bar { padding-block: 10px 0; }
+.mini-score { display: flex; align-items: center; gap: 5px; font-variant-numeric: tabular-nums; }
+.mini-score b { font-family: var(--font-display); font-weight: 400; font-size: 17px; }
+.mini-score .av { font-size: 17px; }
+
+.seat {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--r);
+  background: var(--bg-deep);
+  opacity: .6;
+  transition: opacity .2s, background .2s, box-shadow .2s;
+}
+.seat .av {
+  font-size: 30px;
+  width: 50px; height: 50px;
+  display: grid; place-items: center;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--pc) 22%, var(--bg));
+}
+.seat .nm { font-weight: 800; font-size: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.seat .status { font-family: var(--font-display); font-size: 15px; color: var(--pc); white-space: nowrap; }
+.seat.active, .seat.won, .seat.tied { opacity: 1; }
+.seat.active {
+  background: color-mix(in srgb, var(--pc) 16%, var(--bg-deep));
+  box-shadow: inset 0 0 0 3px var(--pc);
+}
+.seat.active .av { animation: nudge 1.6s ease-in-out infinite; }
+.seat.won { background: color-mix(in srgb, var(--gold) 18%, var(--bg-deep)); box-shadow: inset 0 0 0 3px var(--gold); }
+.seat.won .status { color: var(--gold); }
+.seat.lost { opacity: .45; }
+.seat.tied .status { color: var(--muted); }
+
+/* Across-the-table: Player 2 reads their bay upside down from the far side. */
+.game.f2f .seat-top { transform: rotate(180deg); }
+
+.stage {
+  position: relative;
+  min-height: 0;
+  container-type: size;
+  display: grid;
+  place-items: center;
+}
+.board-slot { width: min(100cqw, 100cqh, 480px); }
+.board-slot.square { aspect-ratio: 1; }
+
+.again-layer {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  animation: fade-in .25s ease-out;
+}
+.again-btn {
+  width: 112px; height: 112px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 2px;
+  background: var(--gold);
+  color: var(--on-gold);
+  box-shadow: 0 5px 0 var(--edge), 0 0 0 8px color-mix(in srgb, var(--bg) 70%, transparent);
+  font-family: var(--font-display);
+  font-size: 16px;
+}
+.again-btn svg { width: 40px; height: 40px; }
+.again-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--edge), 0 0 0 8px color-mix(in srgb, var(--bg) 70%, transparent); }
+
+/* Tic-Tac-Toe ------------------------------------------------------------ */
+
+.ttt {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template: repeat(3, minmax(0, 1fr)) / repeat(3, minmax(0, 1fr));
+  gap: 3.5%;
+  container-type: inline-size;
+}
+.ttt-cell {
+  border-radius: 16px;
+  background: var(--cell);
+  box-shadow: 0 4px 0 var(--edge);
+  display: grid;
+  place-items: center;
+  transition: opacity .25s, background .2s;
+}
+.ttt-cell:not(.taken):active { transform: translateY(3px); box-shadow: 0 1px 0 var(--edge); }
+.ttt-cell.taken {
+  cursor: default;
+  background: color-mix(in srgb, var(--pc) 24%, var(--cell));
+  box-shadow: inset 0 0 0 4px var(--pc), 0 4px 0 var(--edge);
+}
+.ttt-cell .piece {
+  font-size: 17cqw;
+  line-height: 1;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  animation: drop-in .22s ease-out;
+}
+.ttt.done .ttt-cell:not(.win) { opacity: .35; }
+.ttt.draw .ttt-cell { opacity: .55; }
+.ttt-cell.win {
+  background: color-mix(in srgb, var(--gold) 30%, var(--cell));
+  box-shadow: inset 0 0 0 5px var(--gold), 0 4px 0 var(--edge);
+  animation: glow 1.4s ease-in-out infinite;
+}
+
+/* Motion ----------------------------------------------------------------- */
+
+@keyframes drop-in { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes glow { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.15); } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* Bigger screens (iPad) -------------------------------------------------- */
+
+@media (min-width: 700px) {
+  .screen { max-width: 640px; }
+  .seat .av { width: 60px; height: 60px; font-size: 36px; }
+  .seat .nm { font-size: 22px; }
+  .seat .status { font-size: 18px; }
+}

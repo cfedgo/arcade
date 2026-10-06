@@ -27,14 +27,29 @@
     let over = false;
     let busy = false;
 
-    ctx.setShape(COLS / ROWS);
-    let html = '<div class="c4" role="grid" aria-label="Connect 4 board">';
+    // Arrow row above the board shows which way the discs go (and can be tapped too).
+    const ARROW_ROW = 0.8; // in board rows
+    ctx.setShape(COLS / (ROWS + ARROW_ROW));
+    const arrow = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20 4 11h5V4h6v7h5z" fill="var(--pc)" stroke="var(--edge)" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+    let html = '<div class="c4-wrap"><div class="c4-arrows">';
+    for (let c = 0; c < COLS; c++) {
+      html += '<button class="c4-arrow" data-c="' + c + '" aria-label="Drop in column ' + (c + 1) + '">' + arrow + '</button>';
+    }
+    html += '</div><div class="c4" role="grid" aria-label="Connect 4 board">';
     for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
       html += '<div class="c4-cell" data-r="' + r + '" data-c="' + c + '"><span class="c4-hole"></span></div>';
     }
-    html += '</div>';
+    html += '</div></div>';
     ctx.stage.innerHTML = html;
+    const wrap = ctx.stage.querySelector('.c4-wrap');
     const board = ctx.stage.querySelector('.c4');
+    const arrows = Array.from(wrap.querySelectorAll('.c4-arrow'));
+
+    function showTurn() {
+      wrap.classList.toggle('p1', turn === 0);
+      wrap.classList.toggle('p2', turn === 1);
+      ctx.setTurn(turn);
+    }
     const cellEl = (r, c) => board.children[r * COLS + c];
 
     function runThrough(r, c, dr, dc) {
@@ -90,6 +105,7 @@
         over = true;
         run.forEach(([rr, cc]) => cellEl(rr, cc).classList.add('win'));
         board.classList.add('done');
+        wrap.classList.add('done');
         drawWinLine(run);
         ctx.finish(turn);
         return;
@@ -97,15 +113,16 @@
       if (noOneCanWin()) {
         over = true;
         board.classList.add('done', 'draw');
+        wrap.classList.add('done');
         ctx.finish(null);
         return;
       }
       turn = 1 - turn;
-      ctx.setTurn(turn);
+      showTurn();
     }
 
     function onTap(e) {
-      const cell = e.target.closest('.c4-cell');
+      const cell = e.target.closest('.c4-cell, .c4-arrow');
       if (!cell || over || busy) return;
       const c = +cell.dataset.c;
       let r = -1;
@@ -113,6 +130,7 @@
         if (cells[rr * COLS + c] === null) { r = rr; break; }
       }
       if (r < 0) return; // column full
+      if (r === 0) arrows[c].classList.add('full');
 
       cells[r * COLS + c] = turn;
       const target = cellEl(r, c);
@@ -136,9 +154,9 @@
       }
     }
 
-    board.addEventListener('click', onTap);
-    ctx.setTurn(turn);
-    return function cleanup() { board.removeEventListener('click', onTap); over = true; };
+    wrap.addEventListener('click', onTap);
+    showTurn();
+    return function cleanup() { wrap.removeEventListener('click', onTap); over = true; };
   }
 
   Arcade.registerGame({

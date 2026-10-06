@@ -282,7 +282,7 @@
         sw('sound', 'Sounds', 'Little retro beeps. Off keeps the table quiet.') +
         sw('faceToFace', 'Across the table', 'Flips Player 2’s side so it reads right from across the table.') +
         install +
-        '<p class="fineprint">Luca\u2019s Games · version 5 · no ads, no accounts, nothing leaves this phone.</p>' +
+        '<p class="fineprint">Luca\u2019s Games · version 6 · no ads, no accounts, nothing leaves this phone.</p>' +
       '</main>';
   }
 

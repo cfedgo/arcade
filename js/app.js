@@ -272,7 +272,7 @@
         sw('sound', 'Sounds', 'Little retro beeps. Off keeps the table quiet.') +
         sw('faceToFace', 'Across the table', 'Flips Player 2’s side so it reads right from across the table.') +
         install +
-        '<p class="fineprint">Luca\u2019s Games · version 2 · no ads, no accounts, nothing leaves this phone.</p>' +
+        '<p class="fineprint">Luca\u2019s Games · version 3 · no ads, no accounts, nothing leaves this phone.</p>' +
       '</main>';
   }
 
@@ -322,14 +322,19 @@
           '<button class="icon-btn" data-restart aria-label="Start this game over">' + ICONS.again + '</button></header>' +
         seat(1, 'top') +
         '<div class="stage"><div class="board-slot"></div>' +
-          '<div class="again-layer" hidden><button class="again-btn" data-again>' + ICONS.again + '<span>Again</span></button></div>' +
+          '<div class="action-row">' +
+            '<button class="again-btn" data-again hidden>' + ICONS.again + '<span>Again</span></button>' +
+            '<button class="reset-score" data-reset-score hidden>Reset score</button>' +
+          '</div>' +
         '</div>' +
         seat(0, 'bottom') +
       '</main>';
 
     const screen = root.querySelector('.game');
     const slot = screen.querySelector('.board-slot');
-    const againLayer = screen.querySelector('.again-layer');
+    const againBtn = screen.querySelector('[data-again]');
+    const resetBtn = screen.querySelector('[data-reset-score]');
+    let resetTimer = null;
     const seats = [screen.querySelector('[data-seat="0"]'), screen.querySelector('[data-seat="1"]')];
     let roundCleanup = null;
     let finished = false;
@@ -344,13 +349,27 @@
       });
     }
 
+    function hasScore() {
+      const s = scoreFor(g.id);
+      return s.w[0] + s.w[1] + s.t > 0;
+    }
+
+    function disarmReset() {
+      clearTimeout(resetTimer);
+      resetBtn.dataset.armed = '';
+      resetBtn.textContent = 'Reset score';
+      resetBtn.classList.remove('armed');
+    }
+
     function setStatus(i, text) { seats[i].querySelector('.status').textContent = text; }
 
     function startRound() {
       if (roundCleanup) { roundCleanup(); roundCleanup = null; }
       clearTimeout(againTimer);
       finished = false;
-      againLayer.hidden = true;
+      againBtn.hidden = true;
+      disarmReset();
+      resetBtn.hidden = !hasScore();
       screen.classList.remove('over');
       seats.forEach((s, k) => { s.classList.remove('active', 'won', 'lost', 'tied'); setStatus(k, ''); });
       const starter = state.starters[g.id] === 1 ? 1 : 0;
@@ -386,14 +405,31 @@
             Sound.tie();
           }
           updateMini();
-          againTimer = setTimeout(() => { againLayer.hidden = false; }, 600);
+          disarmReset();
+          resetBtn.hidden = true;
+          againTimer = setTimeout(() => { againBtn.hidden = false; }, 600);
         }
       };
       roundCleanup = g.newRound(ctx) || null;
     }
 
-    againLayer.addEventListener('click', (e) => {
-      if (e.target.closest('[data-again]')) { Sound.click(); startRound(); }
+    againBtn.addEventListener('click', () => { Sound.click(); startRound(); });
+
+    // Reset this game's score. Two taps, so a stray finger can't wipe it.
+    resetBtn.addEventListener('click', () => {
+      if (resetBtn.dataset.armed === '1') {
+        delete state.scores[g.id];
+        save();
+        updateMini();
+        disarmReset();
+        resetBtn.hidden = true;
+        Sound.click();
+        return;
+      }
+      resetBtn.dataset.armed = '1';
+      resetBtn.textContent = 'Tap again to reset';
+      resetBtn.classList.add('armed');
+      resetTimer = setTimeout(disarmReset, 3000);
     });
     // Start over mid-game: clears the board, doesn't count as a game.
     screen.querySelector('[data-restart]').addEventListener('click', () => { Sound.click(); startRound(); });
@@ -404,6 +440,7 @@
 
     leaveCurrent = () => {
       clearTimeout(againTimer);
+      clearTimeout(resetTimer);
       if (roundCleanup) roundCleanup();
       keepAwake(false);
     };

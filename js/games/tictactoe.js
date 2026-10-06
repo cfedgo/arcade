@@ -15,6 +15,22 @@
   ];
   const NAMES = ['X', 'O'];
 
+  // A line through the winning three, drawn on top of the board (board is 100 x 100 units).
+  // Cell centers sit at 15.5, 50 and 84.5 because of the gaps between cells.
+  const CENTER = [15.5, 50, 84.5];
+  function winLineSvg(line) {
+    const pt = (i) => [CENTER[i % 3], CENTER[Math.floor(i / 3)]];
+    const [x1, y1] = pt(line[0]);
+    const [x2, y2] = pt(line[2]);
+    const len = Math.hypot(x2 - x1, y2 - y1);
+    const ext = 9; // run a little past the outer pieces
+    const dx = (x2 - x1) / len * ext;
+    const dy = (y2 - y1) / len * ext;
+    const d = 'M' + (x1 - dx).toFixed(1) + ' ' + (y1 - dy).toFixed(1) + 'L' + (x2 + dx).toFixed(1) + ' ' + (y2 + dy).toFixed(1);
+    return '<svg class="win-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' +
+      '<path class="edge" pathLength="1" d="' + d + '"/><path class="chalk" pathLength="1" d="' + d + '"/></svg>';
+  }
+
   function winnerOf(cells) {
     for (const [a, b, c] of LINES) {
       if (cells[a] !== null && cells[a] === cells[b] && cells[a] === cells[c]) return [a, b, c];
@@ -64,6 +80,7 @@
         over = true;
         line.forEach((k) => buttons[k].classList.add('win'));
         board.classList.add('done');
+        board.insertAdjacentHTML('beforeend', winLineSvg(line));
         ctx.finish(turn);
         return;
       }

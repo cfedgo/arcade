@@ -1,6 +1,6 @@
 /* Luca's Games offline support.
    Bump VERSION whenever files change so phones pick up the new copy. */
-const VERSION = 'lucas-games-v2';
+const VERSION = 'lucas-games-v3';
 const ASSETS = [
   './',
   './index.html',

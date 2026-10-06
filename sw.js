@@ -1,6 +1,6 @@
-/* Dino Garage offline support.
+/* Luca's Games offline support.
    Bump VERSION whenever files change so phones pick up the new copy. */
-const VERSION = 'dino-garage-v1';
+const VERSION = 'lucas-games-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -16,7 +16,9 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(VERSION).then((cache) => cache.addAll(ASSETS)));
+  // cache: 'reload' skips the browser's own cache so a new version really is new.
+  event.waitUntil(caches.open(VERSION).then((cache) =>
+    cache.addAll(ASSETS.map((url) => new Request(url, { cache: 'reload' })))));
   self.skipWaiting();
 });
 

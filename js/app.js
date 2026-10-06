@@ -1,4 +1,4 @@
-/* Dino Garage — the arcade shell.
+/* Luca's Games — the arcade shell.
    Handles players, scores, settings, sounds and screens.
    Each game lives in js/games/ and registers itself with Arcade.registerGame(). */
 (function () {
@@ -177,9 +177,11 @@
   let root = null;
   let current = 'home';
   let leaveCurrent = null;
+  let pendingReload = false;
 
   function go(name, arg) {
     if (leaveCurrent) { leaveCurrent(); leaveCurrent = null; }
+    if (pendingReload && name !== 'game') { location.reload(); return; }
     current = name;
     root.scrollTop = 0;
     root.classList.toggle('no-scroll', name === 'game');
@@ -215,7 +217,7 @@
     root.innerHTML =
       '<main class="screen home">' +
         '<header class="home-head">' +
-          '<h1 class="logo"><span class="l1">Dino</span><span class="l2">Garage</span></h1>' +
+          '<h1 class="logo"><span class="l1">Luca\u2019s</span><span class="l2">Games</span></h1>' +
           '<button class="icon-btn" data-go="settings" aria-label="Settings">' + ICONS.gear + '</button>' +
         '</header>' +
         '<button class="matchup" data-go="players" aria-label="Change players">' +
@@ -270,7 +272,7 @@
         sw('sound', 'Sounds', 'Little retro beeps. Off keeps the table quiet.') +
         sw('faceToFace', 'Across the table', 'Flips Player 2’s side so it reads right from across the table.') +
         install +
-        '<p class="fineprint">Dino Garage · version 1 · no ads, no accounts, nothing leaves this phone.</p>' +
+        '<p class="fineprint">Luca\u2019s Games · version 2 · no ads, no accounts, nothing leaves this phone.</p>' +
       '</main>';
   }
 
@@ -301,17 +303,23 @@
     const g = games.find((x) => x.id === id && x.newRound);
     if (!g) { go('home'); return; }
     const p = state.players;
+    // A game can swap the avatar for its own piece (Tic-Tac-Toe shows X and O).
+    const seatPiece = (i) => g.seatIcon
+      ? '<span class="av piece-badge">' + g.seatIcon(i) + '</span>'
+      : '<span class="av">' + p[i].avatar + '</span>';
     const seat = (i, pos) =>
       '<div class="seat seat-' + pos + ' p' + (i + 1) + '" data-seat="' + i + '">' +
-        '<span class="av">' + p[i].avatar + '</span>' +
-        '<span class="nm">' + esc(playerName(i)) + '</span>' +
-        '<span class="status"></span>' +
+        seatPiece(i) +
+        '<span class="seat-text"><span class="nm">' + esc(playerName(i)) + '</span>' +
+        '<span class="status"></span></span>' +
+        '<span class="seat-score" aria-label="Wins"></span>' +
       '</div>';
 
     root.innerHTML =
       '<main class="screen game' + (state.settings.faceToFace ? ' f2f' : '') + '" data-game="' + g.id + '">' +
         '<header class="bar"><button class="icon-btn" data-go="home" aria-label="Home">' + ICONS.home + '</button>' +
-          '<h2 class="bar-title">' + g.name + '</h2><span class="mini-score" aria-live="polite"></span></header>' +
+          '<h2 class="bar-title">' + g.name + '</h2>' +
+          '<button class="icon-btn" data-restart aria-label="Start this game over">' + ICONS.again + '</button></header>' +
         seat(1, 'top') +
         '<div class="stage"><div class="board-slot"></div>' +
           '<div class="again-layer" hidden><button class="again-btn" data-again>' + ICONS.again + '<span>Again</span></button></div>' +
@@ -323,15 +331,17 @@
     const slot = screen.querySelector('.board-slot');
     const againLayer = screen.querySelector('.again-layer');
     const seats = [screen.querySelector('[data-seat="0"]'), screen.querySelector('[data-seat="1"]')];
-    const mini = screen.querySelector('.mini-score');
     let roundCleanup = null;
     let finished = false;
     let againTimer = null;
 
     function updateMini() {
       const s = scoreFor(g.id);
-      mini.innerHTML = '<span class="av">' + p[0].avatar + '</span><b class="p1c">' + s.w[0] +
-        '</b><span class="dash">–</span><b class="p2c">' + s.w[1] + '</b><span class="av">' + p[1].avatar + '</span>';
+      seats.forEach((el, k) => {
+        const n = s.w[k];
+        el.querySelector('.seat-score').innerHTML = n > 0 ? '<span class="trophy">🏆</span>' + n : '';
+        el.querySelector('.seat-score').setAttribute('aria-label', n + (n === 1 ? ' win' : ' wins'));
+      });
     }
 
     function setStatus(i, text) { seats[i].querySelector('.status').textContent = text; }
@@ -376,7 +386,7 @@
             Sound.tie();
           }
           updateMini();
-          againTimer = setTimeout(() => { againLayer.hidden = false; }, 900);
+          againTimer = setTimeout(() => { againLayer.hidden = false; }, 600);
         }
       };
       roundCleanup = g.newRound(ctx) || null;
@@ -385,6 +395,8 @@
     againLayer.addEventListener('click', (e) => {
       if (e.target.closest('[data-again]')) { Sound.click(); startRound(); }
     });
+    // Start over mid-game: clears the board, doesn't count as a game.
+    screen.querySelector('[data-restart]').addEventListener('click', () => { Sound.click(); startRound(); });
 
     updateMini();
     startRound();
@@ -456,8 +468,17 @@
     if (!('serviceWorker' in navigator)) return;
     if (location.protocol !== 'https:' && location.hostname !== 'localhost') return;
     if (window.self !== window.top) return; // skip inside previews
+    // When a new version arrives, switch to it — but never in the middle of a game.
+    const hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController) return; // first install, nothing to refresh
+      if (current === 'game') pendingReload = true;
+      else location.reload();
+    });
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(() => {});
+      navigator.serviceWorker.register('sw.js')
+        .then((reg) => reg.update())
+        .catch(() => {});
     });
   }
 

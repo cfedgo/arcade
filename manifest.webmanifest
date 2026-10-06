@@ -1,6 +1,6 @@
 {
-  "name": "Dino Garage",
-  "short_name": "Dino Garage",
+  "name": "Luca's Games",
+  "short_name": "Luca's Games",
   "description": "Simple two-player games for the dinner table. No ads.",
   "start_url": "./",
   "scope": "./",

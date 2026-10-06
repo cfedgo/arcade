@@ -1,4 +1,4 @@
-# Dino Garage
+# Luca's Games
 
 Simple two-player games for the dinner table. No ads, no accounts, works offline.
 

@@ -272,7 +272,7 @@
         sw('sound', 'Sounds', 'Little retro beeps. Off keeps the table quiet.') +
         sw('faceToFace', 'Across the table', 'Flips Player 2’s side so it reads right from across the table.') +
         install +
-        '<p class="fineprint">Luca\u2019s Games · version 3 · no ads, no accounts, nothing leaves this phone.</p>' +
+        '<p class="fineprint">Luca\u2019s Games · version 4 · no ads, no accounts, nothing leaves this phone.</p>' +
       '</main>';
   }
 
@@ -324,10 +324,10 @@
         '<div class="stage"><div class="board-slot"></div>' +
           '<div class="action-row">' +
             '<button class="again-btn" data-again hidden>' + ICONS.again + '<span>Again</span></button>' +
-            '<button class="reset-score" data-reset-score hidden>Reset score</button>' +
           '</div>' +
         '</div>' +
         seat(0, 'bottom') +
+        '<div class="game-foot"><button class="reset-score" data-reset-score hidden>Reset score</button></div>' +
       '</main>';
 
     const screen = root.querySelector('.game');

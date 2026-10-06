@@ -353,9 +353,9 @@ button.game-row:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--e
 .game {
   height: 100%;
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
   gap: 12px;
-  padding-block: 0 14px;
+  padding-block: 0 8px;
 }
 .game .bar { padding-block: 10px 0; grid-template-columns: 44px minmax(0, 1fr) 44px; }
 
@@ -441,8 +441,14 @@ button.game-row:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--e
 }
 .again-btn svg { width: 28px; height: 28px; }
 .again-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--edge); }
+.game-foot {
+  height: 36px;
+  display: grid;
+  place-items: center;
+  margin-top: -4px;
+}
 .reset-score {
-  padding: 10px 16px;
+  padding: 6px 16px;
   border-radius: 999px;
   font-size: 15px;
   font-weight: 700;

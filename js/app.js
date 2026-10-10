@@ -144,6 +144,7 @@
     c4: '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="5" y="9" width="38" height="31" rx="4" fill="var(--line)"/><g fill="var(--bg)"><circle cx="13" cy="17" r="4"/><circle cx="24" cy="17" r="4"/><circle cx="35" cy="17" r="4"/><circle cx="35" cy="32" r="4"/></g><circle cx="13" cy="32" r="4" fill="var(--p1)"/><circle cx="24" cy="32" r="4" fill="var(--p2)"/></svg>',
     memory: '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="10" width="17" height="26" rx="3" fill="var(--line)" transform="rotate(-8 14 23)"/><rect x="25" y="10" width="17" height="26" rx="3" fill="var(--ink)" transform="rotate(6 33 23)"/><circle cx="33.5" cy="23" r="4.5" fill="var(--p2)" transform="rotate(6 33 23)"/></svg>',
     checkers: '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="6" width="36" height="36" rx="3" fill="var(--line)"/><g fill="var(--bg)"><rect x="6" y="6" width="9" height="9"/><rect x="24" y="6" width="9" height="9"/><rect x="15" y="15" width="9" height="9"/><rect x="33" y="15" width="9" height="9"/><rect x="6" y="24" width="9" height="9"/><rect x="24" y="24" width="9" height="9"/><rect x="15" y="33" width="9" height="9"/><rect x="33" y="33" width="9" height="9"/></g><circle cx="19.5" cy="19.5" r="3.6" fill="var(--p1)"/><circle cx="28.5" cy="37.5" r="3.6" fill="var(--p2)"/></svg>',
+    color: '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="8" y="6" width="26" height="34" rx="3" fill="var(--bg)" stroke="var(--ink)" stroke-width="2.5" opacity=".9"/><circle cx="17" cy="17" r="5" fill="var(--p1)"/><rect x="13" y="26" width="14" height="8" rx="2" fill="var(--p2)"/><path d="M27 38 L40 20 L45 23.5 L32 41.5 L26 43 Z" fill="var(--p1)" stroke="var(--ink)" stroke-width="2.2" stroke-linejoin="round"/></svg>',
     home: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11 12 4l8.5 7M6 9.5V20h4.5v-5.5h3V20H18V9.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     back: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     gear: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.5 5.5l1.8 1.8M16.7 16.7l1.8 1.8M5.5 18.5l1.8-1.8M16.7 7.3l1.8-1.8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
@@ -222,7 +223,9 @@
         : '<span class="grec go">' + ICONS.chevron + '</span>';
       return '<li><button class="game-row" data-play="' + g.id + '"><span class="gicon">' + g.icon +
         '</span><span class="gname">' + g.name + '</span>' + rec + '</button></li>';
-    }).join('');
+    }).join('') +
+      '<li><a class="game-row" href="coloring/"><span class="gicon">' + ICONS.color +
+      '</span><span class="gname">Coloring</span><span class="grec go">' + ICONS.chevron + '</span></a></li>';
 
     root.innerHTML =
       '<main class="screen home">' +

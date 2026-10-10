@@ -1,6 +1,6 @@
 # Luca's Games
 
-Simple two-player games for the dinner table. No ads, no accounts, works offline.
+Simple two-player games for the dinner table, plus a coloring book. No ads, no accounts, works offline.
 
 **Play:** https://cfedgo.github.io/arcade/
 
@@ -21,6 +21,25 @@ Simple two-player games for the dinner table. No ads, no accounts, works offline
 | Checkers | Official rules: must jump, multi-jumps, kings |
 
 Player 1 is always blue (X), Player 2 always green (O).
+
+## Coloring
+
+**Color:** https://cfedgo.github.io/arcade/coloring/ (also a tile on the games list)
+
+- Tap-to-fill bucket, markers in 4 sizes, eraser, undo, start over
+- Built-in pages live in `coloring/pages/` as traced vector line art
+- "Add a picture" loads a page from the device and cleans it into line art
+- Coloring is saved on the device
+
+### Put it on an Amazon Fire tablet
+
+1. Open the coloring link above in **Silk**.
+2. Open the menu, choose **Add to Home Screen**.
+3. Using an Amazon Kids profile? In the parent settings for his profile, turn on the web browser and allow `cfedgo.github.io`.
+
+### Adding new pages
+
+Make pages in ChatGPT with thick, closed outlines and no gray shading. They are traced to vectors (potrace) and saved to `coloring/pages/`, then listed in `coloring/index.html` and `sw.js`.
 
 Phase 2 adds a computer opponent.
 

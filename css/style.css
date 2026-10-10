@@ -229,7 +229,8 @@ svg { display: block; }
   box-shadow: 0 4px 0 var(--edge);
   text-align: left;
 }
-button.game-row:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--edge); }
+button.game-row:active, a.game-row:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--edge); }
+a.game-row { color: inherit; text-decoration: none; }
 .game-row.soon { background: transparent; box-shadow: inset 0 0 0 2px var(--panel); }
 .game-row.soon .gicon, .game-row.soon .gname { opacity: .55; }
 .gicon { width: 52px; height: 52px; display: grid; place-items: center; border-radius: 10px; background: var(--bg); }

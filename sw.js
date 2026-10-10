@@ -1,6 +1,6 @@
 /* Luca's Games offline support.
    Bump VERSION whenever files change so phones pick up the new copy. */
-const VERSION = 'lucas-games-v6';
+const VERSION = 'lucas-games-v7';
 const ASSETS = [
   './',
   './index.html',
@@ -16,7 +16,21 @@ const ASSETS = [
   './icons/apple-touch-icon.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
-  './icons/favicon.png'
+  './icons/favicon.png',
+  './coloring/',
+  './coloring/index.html',
+  './coloring/manifest.webmanifest',
+  './coloring/pages/race.svg',
+  './coloring/pages/tow.svg',
+  './coloring/pages/monster.svg',
+  './coloring/pages/football.svg',
+  './coloring/pages/castle.svg',
+  './coloring/pages/kitchen.svg',
+  './coloring/icons/apple-touch-icon.png',
+  './coloring/icons/icon-192.png',
+  './coloring/icons/icon-512.png',
+  './coloring/icons/icon-maskable-512.png',
+  './coloring/icons/favicon.png'
 ];
 
 self.addEventListener('install', (event) => {
@@ -39,7 +53,12 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
 
-  const key = req.mode === 'navigate' ? './index.html' : req;
+  // Pages are stored as .../index.html; send each page visit to its own copy.
+  let key = req;
+  if (req.mode === 'navigate') {
+    const path = new URL(req.url).pathname;
+    key = path.endsWith('/') ? path + 'index.html' : path;
+  }
   event.respondWith(
     caches.open(VERSION).then(async (cache) => {
       const cached = await cache.match(key, { ignoreSearch: true });

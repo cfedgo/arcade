@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <title>Luca's Coloring</title>
+  <meta name="theme-color" content="#E9F1F6">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Luca's Coloring">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="icons/favicon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+    body { margin: 0; font-size: 14px; }
+    img { max-width: 100%; }
+    [hidden] { display: none !important; }
+    a.chip { text-decoration: none; }
+  </style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&display=swap">
+<style>
+/* Layout: one-screen toy app — chunky ink-outlined "sticker" buttons, page centered, crayon tray below (portrait) or beside (landscape). Single light theme by choice. */
+:root {
+  --paper: #E9F1F6;
+  --card: #FFFFFF;
+  --ink: #24304A;
+  --soft: #5D6B86;
+  --blue: #2F6FD6;
+  --sun: #FFD23F;
+  --display: "Baloo 2", "Trebuchet MS", system-ui, sans-serif;
+  color-scheme: light;
+}
+html, body { height: 100%; }
+body {
+  background: var(--paper);
+  background-image: radial-gradient(rgba(36,48,74,.07) 1.2px, transparent 1.3px);
+  background-size: 22px 22px;
+  color: var(--ink); font-family: var(--display);
+  touch-action: manipulation; overflow: hidden;
+  -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+#app { height: 100%; }
+
+/* Home */
+#home { height: 100%; overflow-y: auto; padding: 18px 16px 28px; box-sizing: border-box; }
+.wrap { max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand svg { width: 46px; height: 46px; flex: none; }
+.brand h1 { margin: 0; font-size: clamp(28px, 6vw, 40px); line-height: 1; font-weight: 800; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
+.card {
+  position: relative; display: flex; flex-direction: column; gap: 6px; padding: 8px 8px 6px;
+  border: 3px solid var(--ink); border-radius: 18px; background: var(--card);
+  box-shadow: 0 5px 0 var(--ink); text-align: center; transition: transform .08s, box-shadow .08s;
+}
+.card:active, .chip:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--ink); }
+.thumb { position: relative; aspect-ratio: 4 / 5; max-width: 100%; border-radius: 10px; overflow: hidden; background: #fff; border: 2px solid rgba(36,48,74,.15); }
+.thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.thumb .big { position: absolute; inset: 0; display: grid; place-items: center; font-size: 54px; font-weight: 800; color: var(--soft); }
+.nm { font-size: 18px; font-weight: 800; line-height: 1.15; min-height: 1.15em; }
+.card.add { background: var(--sun); }
+.card.add .thumb { background: rgba(255,255,255,.6); border-style: dashed; border-color: var(--ink); }
+.del {
+  position: absolute; top: -10px; right: -10px; width: 34px; height: 34px; border-radius: 50%;
+  border: 3px solid var(--ink); background: #fff; display: grid; place-items: center; padding: 0; z-index: 2;
+}
+.del svg { width: 14px; height: 14px; }
+#file { display: none; }
+
+/* Play */
+#play { height: 100%; display: grid; grid-template-rows: auto 1fr auto; }
+.bar { display: flex; align-items: center; gap: 12px; padding: 10px 16px 4px; }
+.bar h2 { flex: 1; margin: 0; text-align: center; font-size: clamp(22px, 5vw, 30px); font-weight: 800; line-height: 1.1; }
+.chip {
+  width: 54px; height: 54px; flex: none; display: grid; place-items: center; padding: 0;
+  border: 3px solid var(--ink); border-radius: 16px; background: var(--card);
+  box-shadow: 0 4px 0 var(--ink); transition: transform .08s, box-shadow .08s;
+}
+.chip svg { width: 30px; height: 30px; }
+#stage { min-height: 0; min-width: 0; display: grid; place-items: center; padding: 8px 16px; }
+#pic { position: relative; background: #fff; border: 3px solid var(--ink); border-radius: 14px; overflow: hidden; box-shadow: 0 6px 0 var(--ink); max-width: 100%; }
+#cv, #lines { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#cv { touch-action: none; }
+#lines { pointer-events: none; }
+
+#tray { padding: 8px 16px 14px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.colors { display: grid; grid-template-columns: repeat(8, auto); gap: 9px; }
+.tools { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px; }
+.sw {
+  width: clamp(36px, 6.4vmin, 52px); height: clamp(36px, 6.4vmin, 52px); border-radius: 50%;
+  border: 3px solid var(--ink); box-shadow: 0 3px 0 var(--ink); padding: 0; transition: transform .12s;
+}
+.sw.on { transform: translateY(-4px) scale(1.08); box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--ink); }
+.tool {
+  height: clamp(42px, 7.4vmin, 56px); min-width: clamp(42px, 7.4vmin, 56px); padding: 0 6px;
+  border: 3px solid var(--ink); border-radius: 14px; background: var(--card); box-shadow: 0 4px 0 var(--ink);
+  display: grid; place-items: center; transition: transform .12s;
+}
+.tool.on { background: var(--sun); transform: translateY(-4px); }
+.tool svg { width: 30px; height: 30px; }
+.dot { border-radius: 50%; display: block; box-shadow: inset 0 0 0 2px rgba(36,48,74,.35); }
+.sep { width: 3px; align-self: stretch; background: rgba(36,48,74,.2); border-radius: 2px; }
+
+@media (orientation: landscape) {
+  #play { grid-template-columns: 1fr auto; grid-template-rows: auto 1fr; }
+  .bar { grid-column: 1 / -1; padding-top: 6px; }
+  #stage { grid-column: 1; grid-row: 2; }
+  #tray { grid-column: 2; grid-row: 2; overflow-y: auto; justify-content: center; padding: 6px 16px 10px 4px; }
+  .colors { grid-template-columns: repeat(4, auto); }
+  .tools { max-width: calc(4 * clamp(36px, 6.4vmin, 52px) + 27px + 12px); }
+}
+
+/* Dialog */
+.overlay { position: fixed; inset: 0; background: rgba(36,48,74,.45); display: grid; place-items: center; padding: 16px; z-index: 10; }
+.dlg {
+  background: var(--card); border: 3px solid var(--ink); border-radius: 22px; box-shadow: 0 6px 0 var(--ink);
+  padding: 22px 20px; max-width: 360px; width: 100%; text-align: center; display: flex; flex-direction: column; gap: 12px;
+}
+.dlg p { margin: 0; font-size: 24px; font-weight: 800; line-height: 1.15; }
+.btn { border: 3px solid var(--ink); border-radius: 16px; box-shadow: 0 4px 0 var(--ink); padding: 10px 14px; font-size: 20px; font-weight: 800; background: var(--card); }
+.btn.warn { background: #FF8A3D; }
+.busy { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(233,241,246,.8); font-size: 26px; font-weight: 800; z-index: 11; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+</head>
+<body>
+<div id="app">
+  <section id="home">
+    <div class="wrap">
+      <div class="brand"><a class="chip" href="../" aria-label="Back to Luca's Games"><svg viewBox="0 0 30 30" aria-hidden="true"><path d="M18 6 L9 15 L18 24" fill="none" stroke="#24304A" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        <svg viewBox="0 0 48 48" aria-hidden="true">
+          <rect x="3" y="3" width="42" height="42" rx="12" fill="#FFD23F" stroke="#24304A" stroke-width="3"/>
+          <path d="M14 34 L30 12 L36 16 L20 38 L13 39 Z" fill="#2F6FD6" stroke="#24304A" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M28 15 L34 19" stroke="#24304A" stroke-width="3"/>
+        </svg>
+        <h1>Luca's Coloring</h1>
+      </div>
+      <div id="grid" class="grid"></div>
+      <input id="file" type="file" accept="image/*">
+    </div>
+  </section>
+
+  <section id="play" hidden>
+    <header class="bar">
+      <button id="home-btn" class="chip" type="button" aria-label="Back to pictures">
+        <svg viewBox="0 0 30 30" aria-hidden="true"><path d="M4 15 L15 5 L26 15" fill="none" stroke="#24304A" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 13 V25 H22 V13" fill="#FFD23F" stroke="#24304A" stroke-width="3.2" stroke-linejoin="round"/><rect x="13" y="18" width="5" height="7" fill="#24304A"/></svg>
+      </button>
+      <h2 id="pname">Picture</h2>
+      <button id="reset-btn" class="chip" type="button" aria-label="Start over">
+        <svg viewBox="0 0 30 30" aria-hidden="true"><path d="M24 15 A9 9 0 1 1 18.5 6.7" fill="none" stroke="#24304A" stroke-width="3.2" stroke-linecap="round"/><path d="M15 3 L20 7 L15.5 11" fill="none" stroke="#24304A" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </header>
+    <div id="stage">
+      <div id="pic">
+        <canvas id="cv"></canvas>
+        <img id="lines" alt="">
+      </div>
+    </div>
+    <div id="tray"></div>
+  </section>
+
+  <div id="confirm" class="overlay" hidden>
+    <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="cq">
+      <p id="cq">Start this picture over?</p>
+      <button id="c-yes" class="btn warn" type="button">Yes</button>
+      <button id="c-no" class="btn" type="button">No, keep it</button>
+    </div>
+  </div>
+  <div id="busy" class="busy" hidden>Getting it ready…</div>
+</div>
+
+<script>
+(function () {
+  // Built-in pages: line art traced to vectors from ChatGPT-made coloring pages.
+  const BUILTIN = [{"id": "race", "name": "Race Day", "w": 1103, "h": 1426, "src": "pages/race.svg"}, {"id": "tow", "name": "Tow Truck Pals", "w": 1103, "h": 1426, "src": "pages/tow.svg"}, {"id": "monster", "name": "Fuzzy Monster", "w": 1122, "h": 1402, "src": "pages/monster.svg"}, {"id": "football", "name": "Football Game", "w": 1104, "h": 1425, "src": "pages/football.svg"}, {"id": "castle", "name": "Castle", "w": 1122, "h": 1402, "src": "pages/castle.svg"}, {"id": "kitchen", "name": "Kitchen", "w": 1312, "h": 1199, "src": "pages/kitchen.svg"}];
+  BUILTIN.forEach(p => { if (p.svg) p.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(p.svg); });
+  const BLANK = { id: 'blank', name: 'Blank Page', w: 1100, h: 1400, src: null };
+
+  const COLORS = ['#E63946', '#FF8A3D', '#FFD23F', '#8CCB5E', '#2E9E5A', '#2BB3A3', '#7CC8F2', '#2F6FD6',
+                  '#22408F', '#8E5BD6', '#FF7EB6', '#9C6B3F', '#F6C9A8', '#D9A066', '#8A939E', '#2B2D33'];
+  const SIZES = [0.006, 0.012, 0.022, 0.04];   // marker width as a share of page width
+  const DOTS = [8, 13, 19, 27];
+  const INK_RGB = [29, 36, 51];
+
+  const $ = s => document.querySelector(s);
+  const home = $('#home'), play = $('#play'), grid = $('#grid'), tray = $('#tray');
+  const pic = $('#pic'), stage = $('#stage'), cv = $('#cv'), ctx = cv.getContext('2d', { willReadFrequently: true });
+  const lines = $('#lines');
+
+  /* ---------- Storage (IndexedDB, falls back to memory) ---------- */
+  const mem = {};
+  const DB = {
+    db: null,
+    open() {
+      return new Promise(res => {
+        try {
+          const r = indexedDB.open('lucas-coloring', 1);
+          r.onupgradeneeded = () => r.result.createObjectStore('kv');
+          r.onsuccess = () => { DB.db = r.result; res(); };
+          r.onerror = () => res();
+        } catch (e) { res(); }
+      });
+    },
+    get(k) {
+      return new Promise(res => {
+        if (!DB.db) return res(mem[k]);
+        try {
+          const q = DB.db.transaction('kv').objectStore('kv').get(k);
+          q.onsuccess = () => res(q.result); q.onerror = () => res(mem[k]);
+        } catch (e) { res(mem[k]); }
+      });
+    },
+    set(k, v) { mem[k] = v; if (!DB.db) return; try { DB.db.transaction('kv', 'readwrite').objectStore('kv').put(v, k); } catch (e) {} },
+    del(k) { delete mem[k]; if (!DB.db) return; try { DB.db.transaction('kv', 'readwrite').objectStore('kv').delete(k); } catch (e) {} }
+  };
+
+  let userPages = [];   // {id, name, w, h, blob}
+  let urls = [];
+  function blobURL(b) { const u = URL.createObjectURL(b); urls.push(u); return u; }
+  function loadImg(src) {
+    return new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = src; });
+  }
+
+  /* ---------- Home ---------- */
+  const X_ICON = '<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2 L12 12 M12 2 L2 12" stroke="#24304A" stroke-width="3" stroke-linecap="round"/></svg>';
+  async function renderHome() {
+    urls.forEach(u => URL.revokeObjectURL(u)); urls = [];
+    const all = BUILTIN.concat(userPages.map(u => Object.assign({ user: true }, u)), [BLANK]);
+    const cards = await Promise.all(all.map(async p => {
+      const art = await DB.get('art:' + p.id);
+      const src = p.user ? blobURL(p.blob) : p.src;
+      const thumb = (art ? '<img alt="" src="' + blobURL(art) + '">' : '') +
+        (src ? '<img alt="" src="' + src + '">' : (art ? '' : '<span class="big">+</span>'));
+      const del = p.user ? '<span role="button" tabindex="0" class="del" data-del="' + p.id + '" aria-label="Remove picture">' + X_ICON + '</span>' : '';
+      return '<button class="card" type="button" data-id="' + p.id + '">' + del + '<div class="thumb">' + thumb + '</div><span class="nm">' + p.name + '</span></button>';
+    }));
+    cards.push('<button class="card add" type="button" data-add="1"><div class="thumb"><span class="big">+</span></div><span class="nm">Add a picture</span></button>');
+    grid.innerHTML = cards.join('');
+  }
+  grid.addEventListener('click', e => {
+    const d = e.target.closest('[data-del]');
+    if (d) { e.stopPropagation(); ask('Remove this picture?', () => removePage(d.dataset.del)); return; }
+    const c = e.target.closest('.card');
+    if (!c) return;
+    if (c.dataset.add) { $('#file').click(); return; }
+    const all = BUILTIN.concat(userPages, [BLANK]);
+    const p = all.find(x => x.id === c.dataset.id);
+    if (p) openPage(p);
+  });
+
+  /* Add your own picture: clean it into crisp line art */
+  $('#file').addEventListener('change', async e => {
+    const f = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    $('#busy').hidden = false;
+    try {
+      const src = URL.createObjectURL(f);
+      const im = await loadImg(src);
+      URL.revokeObjectURL(src);
+      const L = 1400, s = L / Math.max(im.naturalWidth, im.naturalHeight);
+      const W = Math.round(im.naturalWidth * s), H = Math.round(im.naturalHeight * s);
+      const c = document.createElement('canvas'); c.width = W; c.height = H;
+      const x = c.getContext('2d');
+      x.fillStyle = '#fff'; x.fillRect(0, 0, W, H);
+      x.imageSmoothingQuality = 'high';
+      x.drawImage(im, 0, 0, W, H);
+      const d = x.getImageData(0, 0, W, H), a = d.data;
+      for (let i = 0; i < a.length; i += 4) {
+        const lum = 0.299 * a[i] + 0.587 * a[i + 1] + 0.114 * a[i + 2];
+        const al = Math.max(0, Math.min(255, (205 - lum) * 255 / 75));
+        a[i] = INK_RGB[0]; a[i + 1] = INK_RGB[1]; a[i + 2] = INK_RGB[2]; a[i + 3] = al;
+      }
+      x.putImageData(d, 0, 0);
+      const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+      const page = { id: 'u' + Date.now(), name: 'My Picture', w: W, h: H, blob: blob };
+      userPages.push(page);
+      DB.set('pages', userPages);
+      $('#busy').hidden = true;
+      openPage(page);
+    } catch (err) {
+      $('#busy').hidden = true;
+      ask('That picture would not open. Try a PNG or JPG.', null);
+    }
+  });
+  function removePage(id) {
+    userPages = userPages.filter(p => p.id !== id);
+    DB.set('pages', userPages); DB.del('art:' + id);
+    renderHome();
+  }
+
+  /* ---------- Confirm dialog ---------- */
+  let onYes = null;
+  function ask(q, fn) {
+    $('#cq').textContent = q; onYes = fn;
+    $('#c-yes').hidden = !fn; $('#c-no').textContent = fn ? 'No, keep it' : 'OK';
+    $('#confirm').hidden = false; $('#c-no').focus();
+  }
+  $('#c-no').onclick = () => { $('#confirm').hidden = true; };
+  $('#c-yes').onclick = () => { $('#confirm').hidden = true; if (onYes) onYes(); };
+
+  /* ---------- Play ---------- */
+  let cur = null, wall = null, color = COLORS[7], tool = 'fill', size = 1, undo = [], saveTimer = null;
+
+  function fit() {
+    if (play.hidden || !cur) return;
+    const cs = getComputedStyle(stage);
+    const W = stage.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const H = stage.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - 8;
+    const r = cur.w / cur.h;
+    const w = Math.max(120, Math.min(W, H * r));
+    pic.style.width = w + 'px'; pic.style.height = (w / r) + 'px';
+  }
+  window.addEventListener('resize', fit);
+
+  async function openPage(p) {
+    cur = p; undo = [];
+    $('#pname').textContent = p.name;
+    cv.width = p.w; cv.height = p.h;
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, p.w, p.h);
+    home.hidden = true; play.hidden = false;
+    renderTray(); fit();
+    const src = p.src || (p.blob ? blobURL(p.blob) : null);
+    lines.hidden = !src;
+    wall = new Uint8Array(p.w * p.h);
+    if (src) {
+      lines.src = src;
+      try {
+        const im = await loadImg(src);
+        const m = document.createElement('canvas'); m.width = p.w; m.height = p.h;
+        const mx = m.getContext('2d');
+        mx.drawImage(im, 0, 0, p.w, p.h);
+        const a = mx.getImageData(0, 0, p.w, p.h).data;
+        for (let i = 0, j = 3; i < wall.length; i++, j += 4) wall[i] = a[j] > 110 ? 1 : 0;
+      } catch (e) { wall = null; }
+    }
+    const art = await DB.get('art:' + p.id);
+    if (art && cur === p) {
+      try { const im = await loadImg(blobURL(art)); ctx.drawImage(im, 0, 0, p.w, p.h); } catch (e) {}
+    }
+  }
+  function goHome() { flushSave(); play.hidden = true; home.hidden = false; renderHome(); }
+  $('#home-btn').onclick = goHome;
+  $('#reset-btn').onclick = () => ask('Start this picture over?', () => {
+    pushUndo(); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
+    clearTimeout(saveTimer); saveTimer = null; DB.del('art:' + cur.id);
+  });
+
+  /* Tray */
+  const ICON = {
+    fill: '<svg viewBox="0 0 30 30" aria-hidden="true"><path d="M6 13 L14 5 L24 15 L16 23 Z" fill="#fff" stroke="#24304A" stroke-width="2.6" stroke-linejoin="round"/><path d="M6 13 L24 15 L16 23 Z" fill="COL" stroke="#24304A" stroke-width="2.6" stroke-linejoin="round"/><path d="M25 18 C27 21 28 23 26.5 24.5 C25 26 23 24.5 23.5 22.5 Z" fill="COL" stroke="#24304A" stroke-width="2"/></svg>',
+    erase: '<svg viewBox="0 0 28 28" aria-hidden="true"><path d="M5 18 L15 6 L23 12 L13 24 L8 24 Z" fill="#FF7EB6" stroke="#24304A" stroke-width="2.6" stroke-linejoin="round"/><path d="M9 14 L17 20.5" stroke="#24304A" stroke-width="2.6"/></svg>',
+    undo: '<svg viewBox="0 0 28 28" aria-hidden="true"><path d="M9 7 L4 12 L9 17" fill="none" stroke="#24304A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 12 H17 A6 6 0 0 1 17 24 H11" fill="none" stroke="#24304A" stroke-width="3" stroke-linecap="round"/></svg>'
+  };
+  function renderTray() {
+    const cols = COLORS.map(c => '<button type="button" class="sw' + (c === color ? ' on' : '') + '" data-c="' + c + '" style="background:' + c + '" aria-label="Color"></button>').join('');
+    const sizes = DOTS.map((d, k) => '<button type="button" class="tool' + (tool === 'marker' && k === size ? ' on' : '') + '" data-s="' + k + '" aria-label="Marker size ' + (k + 1) + '"><span class="dot" style="width:' + d + 'px;height:' + d + 'px;background:' + color + '"></span></button>').join('');
+    tray.innerHTML = '<div class="colors">' + cols + '</div><div class="tools">' +
+      '<button type="button" class="tool' + (tool === 'fill' ? ' on' : '') + '" data-t="fill" aria-label="Fill">' + ICON.fill.replace(/COL/g, color) + '</button>' +
+      sizes +
+      '<button type="button" class="tool' + (tool === 'erase' ? ' on' : '') + '" data-t="erase" aria-label="Eraser">' + ICON.erase + '</button>' +
+      '<button type="button" class="tool" data-t="undo" aria-label="Undo">' + ICON.undo + '</button></div>';
+  }
+  tray.addEventListener('click', e => {
+    const c = e.target.closest('[data-c]'), s = e.target.closest('[data-s]'), t = e.target.closest('[data-t]');
+    if (c) { color = c.dataset.c; if (tool === 'erase') tool = 'fill'; }
+    else if (s) { size = +s.dataset.s; tool = 'marker'; }
+    else if (t && t.dataset.t === 'undo') {
+      const snap = undo.pop();
+      if (snap) { ctx.putImageData(snap, 0, 0); queueSave(); }
+      return;
+    } else if (t) { tool = t.dataset.t; }
+    else return;
+    renderTray();
+  });
+
+  function pushUndo() {
+    try { undo.push(ctx.getImageData(0, 0, cv.width, cv.height)); if (undo.length > 5) undo.shift(); } catch (e) {}
+  }
+
+  /* Fill: everything inside the lines around the tapped spot */
+  function hex2rgb(h) { const n = parseInt(h.slice(1), 16); return [n >> 16, n >> 8 & 255, n & 255]; }
+  function fillAt(px, py) {
+    const W = cv.width, H = cv.height;
+    if (!wall) wall = new Uint8Array(W * H);
+    let x = Math.round(px), y = Math.round(py);
+    if (x < 0 || y < 0 || x >= W || y >= H) return;
+    // Tapped on a line? Look for open space just next to it.
+    if (wall[y * W + x]) {
+      let found = false;
+      for (let r = 1; r <= 8 && !found; r++) {
+        for (let dy = -r; dy <= r && !found; dy++) for (let dx = -r; dx <= r && !found; dx++) {
+          const nx = x + dx, ny = y + dy;
+          if (nx >= 0 && ny >= 0 && nx < W && ny < H && !wall[ny * W + nx]) { x = nx; y = ny; found = true; }
+        }
+      }
+      if (!found) return;
+    }
+    pushUndo();
+    const reg = new Uint8Array(W * H);
+    let minX = x, maxX = x, minY = y, maxY = y;
+    const stack = [y * W + x];
+    while (stack.length) {
+      const p = stack.pop();
+      if (reg[p]) continue;
+      const row = (p / W) | 0, base = row * W;
+      let l = p - base, r = l;
+      while (l > 0 && !wall[base + l - 1] && !reg[base + l - 1]) l--;
+      while (r < W - 1 && !wall[base + r + 1] && !reg[base + r + 1]) r++;
+      for (let i = l; i <= r; i++) reg[base + i] = 1;
+      if (l < minX) minX = l; if (r > maxX) maxX = r;
+      if (row < minY) minY = row; if (row > maxY) maxY = row;
+      for (const nr of [row - 1, row + 1]) {
+        if (nr < 0 || nr >= H) continue;
+        const nb = nr * W;
+        let inRun = false;
+        for (let i = l; i <= r; i++) {
+          const q = nb + i, open = !wall[q] && !reg[q];
+          if (open && !inRun) { stack.push(q); inRun = true; } else if (!open) inRun = false;
+        }
+      }
+    }
+    // Grow a few pixels under the line so no white gaps show at the edges.
+    minX = Math.max(0, minX - 4); maxX = Math.min(W - 1, maxX + 4); minY = Math.max(0, minY - 4); maxY = Math.min(H - 1, maxY + 4);
+    for (let pass = 2; pass <= 4; pass++) {
+      for (let yy = minY; yy <= maxY; yy++) for (let xx = minX; xx <= maxX; xx++) {
+        const q = yy * W + xx;
+        if (reg[q] || !wall[q]) continue;
+        if ((xx > 0 && reg[q - 1] && reg[q - 1] < pass) || (xx < W - 1 && reg[q + 1] && reg[q + 1] < pass) ||
+            (yy > 0 && reg[q - W] && reg[q - W] < pass) || (yy < H - 1 && reg[q + W] && reg[q + W] < pass)) reg[q] = pass;
+      }
+    }
+    const bw = maxX - minX + 1, bh = maxY - minY + 1;
+    const img = ctx.getImageData(minX, minY, bw, bh), d = img.data;
+    const [cr, cg, cb] = hex2rgb(color);
+    for (let yy = 0; yy < bh; yy++) for (let xx = 0; xx < bw; xx++) {
+      if (!reg[(yy + minY) * W + xx + minX]) continue;
+      const k = (yy * bw + xx) * 4;
+      d[k] = cr; d[k + 1] = cg; d[k + 2] = cb; d[k + 3] = 255;
+    }
+    ctx.putImageData(img, minX, minY);
+    queueSave();
+  }
+
+  /* Marker and eraser */
+  const pts = new Map();
+  function pos(e) {
+    const b = cv.getBoundingClientRect();
+    return { x: (e.clientX - b.left) / b.width * cv.width, y: (e.clientY - b.top) / b.height * cv.height };
+  }
+  function lineW() { return SIZES[size] * cv.width * (tool === 'erase' ? 1.6 : 1); }
+  cv.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    const p = pos(e);
+    if (tool === 'fill') { if (pts.size === 0) fillAt(p.x, p.y); return; }
+    try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+    if (pts.size === 0) pushUndo();
+    pts.set(e.pointerId, p);
+    ctx.fillStyle = tool === 'erase' ? '#fff' : color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, lineW() / 2, 0, Math.PI * 2); ctx.fill();
+  });
+  cv.addEventListener('pointermove', e => {
+    if (!pts.has(e.pointerId)) return;
+    let last = pts.get(e.pointerId);
+    const list = e.getCoalescedEvents ? e.getCoalescedEvents() : [];
+    ctx.strokeStyle = tool === 'erase' ? '#fff' : color;
+    ctx.lineWidth = lineW(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    (list.length ? list : [e]).forEach(ev => {
+      const p = pos(ev);
+      ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+      last = p;
+    });
+    pts.set(e.pointerId, last);
+  });
+  function endStroke(e) { if (pts.delete(e.pointerId)) queueSave(); }
+  cv.addEventListener('pointerup', endStroke);
+  cv.addEventListener('pointercancel', endStroke);
+
+  function queueSave() { clearTimeout(saveTimer); saveTimer = setTimeout(flushSave, 600); }
+  function flushSave() {
+    if (!saveTimer || !cur) return;
+    clearTimeout(saveTimer); saveTimer = null;
+    const id = cur.id;
+    try { cv.toBlob(b => { if (b) DB.set('art:' + id, b); }, 'image/png'); } catch (e) {}
+  }
+  document.addEventListener('visibilitychange', () => { if (document.hidden) flushSave(); });
+
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    navigator.serviceWorker.register('../sw.js').catch(() => {});
+  }
+  DB.open().then(async () => {
+    const saved = await DB.get('pages');
+    if (Array.isArray(saved)) userPages = saved;
+    renderHome();
+  });
+})();
+</script>
+
+</body>
+</html>

@@ -30,6 +30,7 @@ Player 1 is always blue (X), Player 2 always green (O).
 - Built-in pages live in `coloring/pages/` as traced vector line art
 - "Add a picture" loads a page from the device and cleans it into line art
 - Coloring is saved on the device
+- The star button saves a finished copy to **My Art**, titled with the date; open one to view it, delete it, or keep coloring
 
 ### Put it on an Amazon Fire tablet
 

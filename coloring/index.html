@@ -63,6 +63,8 @@ button:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
 .thumb { position: relative; aspect-ratio: 4 / 5; max-width: 100%; border-radius: 10px; overflow: hidden; background: #fff; border: 2px solid rgba(36,48,74,.15); }
 .thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 .thumb .big { position: absolute; inset: 0; display: grid; place-items: center; font-size: 54px; font-weight: 800; color: var(--soft); }
+.sec { grid-column: 1 / -1; margin: 10px 0 -2px; font-size: 26px; font-weight: 800; line-height: 1.1; display: flex; align-items: center; gap: 12px; }
+.sec::after { content: ""; flex: 1; height: 3px; border-radius: 2px; background: rgba(36,48,74,.15); }
 .nm { font-size: 18px; font-weight: 800; line-height: 1.15; min-height: 1.15em; }
 .card.add { background: var(--sun); }
 .card.add .thumb { background: rgba(255,255,255,.6); border-style: dashed; border-color: var(--ink); }
@@ -239,11 +241,13 @@ button:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
   </div>
 </div>
 
+<script src="pages.js"></script>
 <script>
 (function () {
   // Built-in pages: line art traced to vectors from ChatGPT-made coloring pages.
-  const BUILTIN = [{"id": "race", "name": "Race Day", "w": 1103, "h": 1426, "src": "pages/race.svg"}, {"id": "tow", "name": "Tow Truck Pals", "w": 1103, "h": 1426, "src": "pages/tow.svg"}, {"id": "monster", "name": "Fuzzy Monster", "w": 1122, "h": 1402, "src": "pages/monster.svg"}, {"id": "football", "name": "Football Game", "w": 1104, "h": 1425, "src": "pages/football.svg"}, {"id": "castle", "name": "Castle", "w": 1122, "h": 1402, "src": "pages/castle.svg"}, {"id": "kitchen", "name": "Kitchen", "w": 1312, "h": 1199, "src": "pages/kitchen.svg"}];
-  BUILTIN.forEach(p => { if (p.svg) p.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(p.svg); });
+  // The page list lives in pages.js so the offline cache can read the same list.
+  const BUILTIN = (window.COLORING_PAGES || []).map(p => Object.assign({}, p));
+  const CATS = window.COLORING_CATEGORIES || [];
   const BLANK = { id: 'blank', name: 'Blank Page', w: 1100, h: 1400, src: null };
 
   const COLORS = ['#E63946', '#FF8A3D', '#FFD23F', '#8CCB5E', '#2E9E5A', '#2BB3A3', '#7CC8F2', '#2F6FD6',
@@ -313,17 +317,20 @@ button:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
         : '<div class="empty">' + STAR_BIG + 'Tap the star while coloring to save a picture here.</div>';
       return;
     }
-    const all = BUILTIN.concat(userPages.map(u => Object.assign({ user: true }, u)), [BLANK]);
-    const cards = await Promise.all(all.map(async p => {
+    const card = async p => {
       const art = await DB.get('art:' + p.id);
-      const src = p.user ? blobURL(p.blob) : p.src;
+      const src = p.user ? blobURL(p.blob) : (p.thumb || p.src);
       const thumb = (art ? '<img alt="" src="' + blobURL(art) + '">' : '') +
-        (src ? '<img alt="" src="' + src + '">' : (art ? '' : '<span class="big">+</span>'));
+        (src ? '<img alt="" loading="lazy" src="' + src + '">' : (art ? '' : '<span class="big">+</span>'));
       const del = p.user ? '<span role="button" tabindex="0" class="del" data-del="' + p.id + '" aria-label="Remove picture">' + X_ICON + '</span>' : '';
-      return '<button class="card" type="button" data-id="' + p.id + '">' + del + '<div class="thumb">' + thumb + '</div><span class="nm">' + p.name + '</span></button>';
-    }));
-    cards.push('<button class="card add" type="button" data-add="1"><div class="thumb"><span class="big">+</span></div><span class="nm">Add a picture</span></button>');
-    grid.innerHTML = cards.join('');
+      return '<button class="card" type="button" data-id="' + p.id + '">' + del + '<div class="thumb">' + thumb + '</div><span class="nm">' + esc(p.name) + '</span></button>';
+    };
+    const sections = CATS.map(c => ({ name: c.name, pages: BUILTIN.filter(p => p.cat === c.id) }))
+      .concat([{ name: 'Draw Your Own', pages: userPages.map(u => Object.assign({ user: true }, u)).concat([BLANK]), add: true }]);
+    const html = await Promise.all(sections.filter(sec => sec.pages.length).map(async sec =>
+      '<h3 class="sec">' + sec.name + '</h3>' + (await Promise.all(sec.pages.map(card))).join('') +
+      (sec.add ? '<button class="card add" type="button" data-add="1"><div class="thumb"><span class="big">+</span></div><span class="nm">Add a picture</span></button>' : '')));
+    grid.innerHTML = html.join('');
   }
   $('#v-pages').onclick = () => { view = 'pages'; renderHome(); };
   $('#v-saved').onclick = () => { view = 'saved'; renderHome(); };

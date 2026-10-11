@@ -27,7 +27,7 @@ Player 1 is always blue (X), Player 2 always green (O).
 **Color:** https://cfedgo.github.io/arcade/coloring/ (also a tile on the games list)
 
 - Tap-to-fill bucket, markers in 4 sizes, eraser, undo, start over
-- Built-in pages live in `coloring/pages/` as traced vector line art
+- 51 built-in pages in five sections, traced to vector line art (`coloring/pages/`)
 - "Add a picture" loads a page from the device and cleans it into line art
 - Coloring is saved on the device
 - The star button saves a finished copy to **My Art**, titled with the date; open one to view it, delete it, or keep coloring
@@ -40,19 +40,10 @@ Player 1 is always blue (X), Player 2 always green (O).
 
 ### Adding new pages
 
-Make pages in ChatGPT with thick, closed outlines and no gray shading. They are traced to vectors (potrace) and saved to `coloring/pages/`, then listed in `coloring/index.html` and `sw.js`.
+Make pages with thick, closed outlines and no gray shading. Each one is traced to vector line art (potrace), then:
 
-Phase 2 adds a computer opponent.
+1. Save the SVG to `coloring/pages/` and a small WebP thumbnail to `coloring/pages/thumbs/`.
+2. Add a line to `coloring/pages.js` (name, section, size). Sections: Dinosaurs, Cars & Trucks, Animals & Friends, Under the Sea, Fun Places.
+3. Bump `VERSION` in `sw.js`.
 
-## How it's built
-
-Plain HTML, CSS and JavaScript. No frameworks, no build step, no tracking.
-
-- `index.html` loads everything
-- `js/app.js` is the arcade: players, scores, settings, sounds
-- `js/games/` holds one file per game
-- `sw.js` keeps a copy on the phone for offline play. **Bump `VERSION` in `sw.js` whenever files change** so phones pick up the update.
-
-Scores and player names are saved only on the device.
-
-Font: Bungee, SIL Open Font License (`fonts/OFL.txt`).
+Page art is kept in its own offline cache, so phones download each picture once and keep it across updates.
